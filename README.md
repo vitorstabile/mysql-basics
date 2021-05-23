@@ -4,6 +4,8 @@
     - [Chapter 1 - Part 1: Create User](#chapter1part1)
     - [Chapter 1 - Part 2: Login User MySQL](#chapter1part2)
     - [Chapter 1 - Part 3: Create Database MySQL](#chapter1part3)
+    - [Chapter 1 - Part 4: Data Type MySQL](#chapter1part4)
+    - [Chapter 1 - Part 5: Create Database MySQL](#chapter1part3)
 
 ## <a name="chapter1"></a>Chapter 1: MySQL
 
