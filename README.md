@@ -820,7 +820,17 @@ order by c_nomeforne;
 
 ```sql
 
+/* We can create a table with the select clause */
 
+/* QUERY: create table (table name) as (select (column name) from (table name)); */
+
+create table comclien_bkp as (select * from comclien);
+
+create table comclien_bkp2 as (select * from comclien where c_estaclien = 'SP');
+
+select * from comclien_bkp;
+
+select * from comclien_bkp2;
 
 ```
 
@@ -828,7 +838,19 @@ order by c_nomeforne;
 
 ```sql
 
+/* We can insert into atable with the select clause */
 
+/* QUERY: insert into (table name) (select (column name) from (table name)); */
+
+create table comcontato( n_numecontato int not null auto_increment, c_nomecontato varchar(200), c_fonecontato varchar(30), c_cidacontato varchar(200), c_estacontato varchar(2), n_numeclien int, primary key(n_numecontato));
+
+insert into comcontato(select n_numeclien,c_nomeclien,c_foneclien,c_cidaclien,c_estaclien,n_numeclien from comclien);
+
+select * from comcontato;
+
+/* with multiple tables */
+
+insert into comventp_teste (n_numeivenda, n_numeprodu,c_descprodu,n_valoivenda) select n_numeivenda,n_numeprodu,(select c_descprodu from comprodu where n_numeprodu = comivenda.n_numeprodu),n_valoivenda from comivenda;
 
 ```
 
@@ -836,7 +858,9 @@ order by c_nomeforne;
 
 ```sql
 
-
+/* We can alter a table with select */
+ 
+ update comcontato set c_cidacontato = 'LONDRINA', c_estacontato = 'PR' where n_numeclien in ( select n_numeclien from comclien_bkp);
 
 ```
 
@@ -844,7 +868,11 @@ order by c_nomeforne;
 
 ```sql
 
-
+/* We can delete a table with select */
+ 
+delete from comcontato where n_numeclien not in (select n_numeclien from comvenda );
+ 
+commit;
 
 ```
 
@@ -852,7 +880,78 @@ order by c_nomeforne;
 
 ```sql
 
+/* The aggregation functions is responsible to group many values and return one value for a group */
 
+/* Order By */
+
+/* In this SQL function is gonna order by name in a select, but we have the repeated values */
+
+select c_codiclien, c_razaclien 
+from comvenda, comclien 
+where comvenda.n_numeclien = comclien.n_numeclien 
+order by c_razaclien;
+
+/* Group by */
+
+/* In this SQL function we don't have repeated values in a select */
+
+select c_codiclien, c_razaclien
+from comclien, comvenda
+where comvenda.n_numeclien = comclien.n_numeclien
+group by c_codiclien, c_razaclien
+order by c_razaclien;
+
+/* Count() */
+
+/* In this SQL function, we can count the values from a select */
+
+select c_codiclien, c_razaclien, count(n_numevenda) Qtde
+from comclien, comvenda
+where comvenda.n_numeclien = comclien.n_numeclien
+group by c_codiclien, c_razaclien
+order by c_razaclien;
+
+/* We can count the datas from a table */
+
+select count(*) from comclien;
+
+/* Having count() */
+
+/* This SQL function is use with count() function to specify a condition */
+
+select c_razaclien, count(n_numevenda)
+from comclien, comvenda
+where comvenda.n_numeclien = comclien.n_numeclien
+group by c_razaclien
+having count(n_numevenda) > 2;
+
+/* Max() and Min() */
+
+/* This SQL function is to return the max or min value from a cloumn */
+
+select max(n_totavenda) maior_venda from comvenda;
+
+select min(n_totavenda) menor_venda from comvenda;
+
+/* In the same time */
+
+select min(n_totavenda) menor_venda, max(n_totavenda) maior_venda from comvenda;
+
+/* Sum() */
+
+/* This SQL function is use to sum values */
+
+select sum(n_valovenda) valor_venda, 
+	   sum(n_descvenda) descontos, 
+	   sum(n_totavenda) total_venda
+from comvenda
+where d_datavenda between '2015-01-01' and '2015-01-31';
+
+/* Avg() */
+
+/* This SQL function is use to make average values from a column. We can put the float size */
+
+select format(avg(n_totavenda),2) from comvenda;
 
 ```
 
@@ -860,7 +959,48 @@ order by c_nomeforne;
 
 ```sql
 
+/* String functions (characters) can be used to modify the data, with respect to the selected values, */
+/*	but also in the way they are presented. Or yet, */
+/*	modify them for validation. */
 
+/* substr() */
+
+/* In this SQL function, we put the name of the column and the position of what we want. */
+/* After that, we put what we want */
+
+/* length() */
+
+/* In this SQL function, we count how much characters we want */
+
+select c_codiprodu, c_descprodu from comprodu where substr(c_codiprodu,1,3) = '123' and length(c_codiprodu) > 4;
+
+select substr(c_razaclien,1,5) Razao_Social, length(c_codiclien) Tamanho_Cod from comclien where n_numeclien = 1;
+
+/* Concat() */
+
+/* In this SQL function, we can concat two or more columns */
+
+select concat(c_razaforne,' - fone: ', c_foneforne) from comforne order by c_razaforne;
+
+/* concat_ws() */
+
+/* In this SQL function, we can inform the separator */
+
+select concat(c_codiclien,' ',c_razaclien, ' ', c_nomeclien) from comclien where c_razaclien like 'GREA%';
+
+select concat_ws(';',c_codiclien, c_razaclien, c_nomeclien) from comclien where c_razaclien like 'GREA%';
+
+/* Lcase() and lower() */
+
+/* In this SQL function, we can lower letters */
+
+select lcase(c_razaclien) from comclien;
+
+/* Ucase() */
+
+/* In this SQL function, we can large the letters */
+
+select ucase('banco de dados mysql') from dual;
 
 ```
 
@@ -868,7 +1008,39 @@ order by c_nomeforne;
 
 ```sql
 
+/* Round() */
 
+/* This SQL function is used to round values */
+
+select round('213.142',2) from dual;
+
+/* format() */
+
+/* This SQL function is used to format and round values */
+
+select format('21123.142',2) from dual;
+
+/* truncate() */
+
+/* This SQL function is used to truncate values */
+
+select truncate(max(n_totavenda),0) maior_venda from comvenda;
+
+/* Sqrt() */
+
+/* This SQL function is used to square root of values */
+
+select sqrt(4);
+
+/* Pi, Sin, Cos and tan */
+
+select pi();
+
+select sin(pi());
+
+select cos(pi());
+
+select tan(pi()+1);
 
 ```
 
@@ -876,7 +1048,30 @@ order by c_nomeforne;
 
 ```sql
 
+/*
+* : multiplication;
+/ : division;
++ : addition;
+- : subtraction.
+*/
 
+/* to make operations, we have to use the select clause */
+
+/* * : multiplication */
+
+select (n_qtdeivenda * n_valoivenda) multiplicação from comivenda where n_numeivenda = 4;
+
+/* / : division */
+
+select truncate((sum(n_valoivenda) / count(n_numeivenda)),2) divisão from comivenda;
+
+/* + : addition */
+
+select (n_valoivenda + n_descivenda) adição from comivenda where n_numeivenda = 4;
+
+/* - : subtraction */
+
+select (n_valoivenda - n_descivenda) subtração from comivenda where n_numeivenda = 4;
 
 ```
 
@@ -884,7 +1079,71 @@ order by c_nomeforne;
 
 ```sql
 
+/* The Data Format for MySQL YYYY-MM-DD */
 
+/* Curdate() */
+
+/* Return the local date */
+
+ select curdate();
+ 
+ /* now() and sysdate() */
+
+/* Return the hour and local date */
+
+select now();
+
+select sysdate();
+
+/* curtime() */
+
+/* Return just the hour local */
+
+select curtime();
+
+/* datediff() */
+
+/* The difference btwen two dates */
+
+select datediff('2015-02-01 23:59:59','2015-01-01');
+
+/* date_add() */
+
+/* Add a date */
+
+select date_add('2013-01-01', interval 31 day);
+
+/* dayname() */
+
+/* return the name of the date */
+
+select dayname('2015-01-01');
+
+/* dayname() */
+
+/* return the day of the month */
+
+select dayofmonth('2015-01-01');
+
+/* extract() */
+
+/* extract a year of a date */
+
+select extract(year from '2015-01-01');
+
+/* last_day() */
+
+/* extract the last day of a month */
+
+select last_day('2015-02-01');
+
+/* Format a date */
+
+/* date_format() */
+
+select date_format('2015-01-10',get_format(date,'EUR'));
+
+select str_to_date('01.01.2015',get_format(date,'USA'));
 
 ```
 
@@ -892,6 +1151,153 @@ order by c_nomeforne;
 
 ```sql
 
+/* Stored Procedure */
 
+/*This is a example of a stored procedure */
+/* We gonna make another example more easy */
+
+alter table comvenda add n_vcomvenda float(10,2);
+
+/* Once the fields are generated, we will create our stored procedure
+which should look for the percentage value of each seller,
+perform the processing and then update the
+commission value column in the sales table. */
+
+
+/* We will use the procedure to make this update, because in
+our scenario, we had already created the bank without those columns and the
+our system is already in production, that is, we are assuming that there are
+people using it */ 
+
+/* The delimeter of the procedure. Normalym use $$ */
+
+delimiter $$
+
+create procedure processa_comissionamento(in data_inicial date,in data_final date, out total_processado int )
+begin
+	declare total_venda float(10,2) default 0;
+	declare venda int default 0;
+	declare vendedor int default 0;
+	declare comissao float(10,2) default 0;
+	declare valor_comissao float(10,2) default 0;
+	declare aux int default 0;
+	declare fimloop int default 0;
+	
+	/* cursor para buscar os registros a serem */
+	/* processados entre a data inicial e data final */
+	/* e valor total de venda é maior que zero */
+
+	declare busca_pedido cursor for select n_numevenda, n_totavenda, n_numevende from comvenda
+		    where d_datavenda between data_inicial
+			and data_final
+			and n_totavenda > 0 ;
+			 
+	/* Faço aqui um tratamento para o banco não */
+	/* executar o loop quando ele terminar */
+	/* evitando que retorne qualquer erro */
+	declare continue handler for sqlstate '02000' set fimloop = 1;
+
+	/* abro o cursor */
+	open busca_pedido;
+	
+		/* inicio do loop */
+		vendas: LOOP
+		
+		/* Aqui verifico se o loop terminou */
+		/* e saio do loop */
+		if fimloop = 1 then leave vendas;
+		end if;
+		
+		/* recebo o resultado da consulta em cada variável */
+		fetch busca_pedido into venda, total_venda,vendedor;
+		
+		/* busco o valor do percentual de cada vendedor */
+		select n_porcvende into comissao from comvende where n_numevende = vendedor;
+		
+		/* verifico se o percentual do vendedor é maior */
+		/* que zero logo após a condição deve ter o then */
+		if (comissao > 0 ) then
+			/* calculo o valor da comissao */
+			set valor_comissao = ((total_venda * comissao) / 100);
+			
+			/* faço o update na tabela comvenda com o */
+			/* valor da comissão */
+			update comvenda set n_vcomvenda = valor_comissao where n_numevenda = venda;
+			commit;
+			
+		/* verifico se o percentual do vendedor é igual */
+        /* zero na regra do nosso sistema se o vendedor */
+        /* tem 0 ele ganha 0 porcento de comissão */
+		elseif (comissao = 0) then
+		
+			update comvenda set n_vcomvenda = 0 where n_numevenda = venda;
+			commit;
+		/* se ele não possuir registro no percentual de */
+		/* comissão ele irá ganhar 1 de comissão */
+		/* isso pela regra de negócio do nosso sistema */
+		else
+			set comissao = 1;
+			set valor_comissao = ((total_venda * comissao) / 100);
+			
+			update comvenda set n_vcomvenda = valor_comissao where n_numevenda = venda;
+			commit;
+		/* fecho o if */
+		end if;
+		
+		set comissao = 0;
+		/*utilizo a variável aux para contar a quantidade */
+		set aux = aux +1 ;
+	end loop vendas;
+		/* atribuo o total de vendas para a variável de */
+		/* saída */
+	set total_processado = aux;
+	/* fecho o cursor */
+	close busca_pedido;
+	
+	/*retorno o total de vendas processadas */
+	
+	end$$
+	
+delimiter ;
+
+/* To use the procedure */
+
+call processa_comissionamento('2015-01-01','2015-05-30' ,@a);
+select @a;
+
+select * from comvenda;
+
+/* A more simple procedure */
+
+create table comexample (n_numetotal int not null auto_increment, n_numevende int not null, n_valortotal float(10,2), primary key(n_numetotal));
+
+alter table comexample add constraint fk_comexample_comvende
+	foreign key(n_numevende)
+		references comvende (n_numevende)
+			on delete no action
+			on update no action;
+
+insert into comexample (n_numevende) select n_numevende from comvende;
+
+/* we gonna calculate the total value from each vendor */
+
+delimiter $$
+
+create procedure total_value()
+begin
+	select comvende.n_numevende, sum(comvenda.n_vcomvenda)
+	from comvenda
+	inner join comvende
+	on comvende.n_numevende = comvenda.n_numevende
+	group by n_numevende;
+
+	/* or */
+
+	/* select n_numevende, sum(n_vcomvenda) from comvenda group by n_numevende; */
+	
+	end$$
+delimeter ;
+
+call total_value();
 
 ```
