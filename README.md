@@ -1,7 +1,7 @@
 # Content
 
 1. [Chapter 1: MySQL](#chapter1)
-    - [Chapter 1 - Part 1: Create User](#chapter1part1)
+    - [Chapter 1 - Part 1: Create User MySQL](#chapter1part1)
     - [Chapter 1 - Part 2: Login User MySQL](#chapter1part2)
     - [Chapter 1 - Part 3: Create Database MySQL](#chapter1part3)
     - [Chapter 1 - Part 4: Data Type MySQL](#chapter1part4)
@@ -21,12 +21,21 @@
     - [Chapter 1 - Part 18: As Aliases MySQL](#chapter1part18)
     - [Chapter 1 - Part 19: Join Table MySQL](#chapter1part19)
     - [Chapter 1 - Part 20: Order By MySQL](#chapter1part20)
+    - [Chapter 1 - Part 21: Create Table with Select MySQL](#chapter1part21)
+    - [Chapter 1 - Part 22: Insert Table with Select MySQL](#chapter1part22)
+    - [Chapter 1 - Part 23: Alter Table with Select MySQL](#chapter1part23)
+    - [Chapter 1 - Part 24: Delete Table with Select MySQL](#chapter1part24)
+    - [Chapter 1 - Part 25: Aggregation Functions MySQL](#chapter1part25)
+    - [Chapter 1 - Part 26: String Functions MySQL](#chapter1part26)
+    - [Chapter 1 - Part 27: Arithmetic Functions MySQL](#chapter1part27)
+    - [Chapter 1 - Part 28: Mathematical Operations MySQL](#chapter1part28)
+    - [Chapter 1 - Part 29: Data Functions MySQL](#chapter1part29)
+    - [Chapter 1 - Part 30: Stored Procedures MySQL](#chapter1part30)
 
 
 ## <a name="chapter1"></a>Chapter 1: MySQL
 
-#### <a name="chapter1part1"></a>Chapter 1 - Part 1: Create User
-
+#### <a name="chapter1part1"></a>Chapter 1 - Part 1: Create User MySQL
 
 ```sql
 
@@ -804,5 +813,85 @@ on comvenda.n_numeforne = comforne.n_numeforne
 inner join comclien /* junction table comclien */
 on comvenda.n_numeclien = comclien.n_numeclien
 order by c_nomeforne;
+
+```
+
+#### <a name="chapter1part21"></a>Chapter 1 - Part 21: Create Table with Select MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part22"></a>Chapter 1 - Part 22: Insert Table with Select MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part23"></a>Chapter 1 - Part 23: Alter Table with Select MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part24"></a>Chapter 1 - Part 24: Delete Table with Select MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part25"></a>Chapter 1 - Part 25: Aggregation Functions MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part26"></a>Chapter 1 - Part 26: String Functions MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part27"></a>Chapter 1 - Part 27: Arithmetic Functions MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part28"></a>Chapter 1 - Part 28: Mathematical Operations MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part29"></a>Chapter 1 - Part 29: Data Functions MySQL
+
+```sql
+
+
+
+```
+
+#### <a name="chapter1part30"></a>Chapter 1 - Part 30: Stored Procedures MySQ
+
+```sql
+
+
 
 ```
