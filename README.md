@@ -31,6 +31,14 @@
     - [Chapter 1 - Part 28: Mathematical Operations MySQL](#chapter1part28)
     - [Chapter 1 - Part 29: Data Functions MySQL](#chapter1part29)
     - [Chapter 1 - Part 30: Stored Procedures MySQL](#chapter1part30)
+    - [Chapter 1 - Part 31: Create Functions MySQL](#chapter1part31)
+    - [Chapter 1 - Part 32: Event Scheduler MySQL](#chapter1part32)
+    - [Chapter 1 - Part 33: Triggers MySQL](#chapter1part33)
+    - [Chapter 1 - Part 34: Index MySQL](#chapter1part34)
+    - [Chapter 1 - Part 35: Views MySQL](#chapter1part35)
+    - [Chapter 1 - Part 36: Backups MySQL](#chapter1part36)
+    - [Chapter 1 - Part 37: Export CSV MySQL](#chapter1part37)
+    - [Chapter 1 - Part 38: Import CSV MySQL](#chapter1part38)
 
 
 ## <a name="chapter1"></a>Chapter 1: MySQL
@@ -1147,7 +1155,7 @@ select str_to_date('01.01.2015',get_format(date,'USA'));
 
 ```
 
-#### <a name="chapter1part30"></a>Chapter 1 - Part 30: Stored Procedures MySQ
+#### <a name="chapter1part30"></a>Chapter 1 - Part 30: Stored Procedures MySQL
 
 ```sql
 
@@ -1299,5 +1307,781 @@ begin
 delimeter ;
 
 call total_value();
+
+```
+
+#### <a name="chapter1part31"></a>Chapter 1 - Part 31: Create Functions MySQL
+
+```sql
+
+/* With the procedures, we were able to carry out processing, and */
+/* yet, if we want to, get some return. Functions are used */
+/* specifically to return something. */
+
+/* We can spend some parameter with the same type of declaration that we make in */
+/* procedure and inform the type of return we will have. */
+
+/* If you want to create something to get some feedback, I advise */
+/* use of a function, because we can use them in the middle */
+/* consultation, unlike the procedure, that we have to */
+/* run with a specific command. */
+
+/* Let's create a function to return the name of the client, according with the number of the client */
+
+delimiter $$
+
+create function rt_nome_cliente(vn_numeclien int)
+	returns varchar(50) deterministic
+	
+	begin
+	
+		declare nome varchar(50);
+		
+		select c_nomeclien into nome from comclien where n_numeclien = vn_numeclien;
+		
+		return nome;
+		
+	end $$
+	
+delimiter ;
+
+/* estou passando como parâmetro o id do cliente igual a 1 */
+
+select rt_nome_cliente(1);
+
+/* we can use function with select */
+
+/* irei retornar o código da venda, nome do cliente e a */
+/* data da venda ordenando pelo nome e em seguida pela data */
+
+select c_codivenda, rt_nome_cliente(n_numeclien), d_datavenda from comvenda order by 2,3;
+
+```
+
+#### <a name="chapter1part32"></a>Chapter 1 - Part 32: Event Scheduler MySQL
+
+```sql
+
+/*
+We created a procedure to do the processing of
+commissions. However, performing this processing may result in a
+very boring activity. We can schedule events to do so
+automatically and periodically. For this, we use the event
+scheduler.
+*/
+
+/* 
+Let's program the procedure
+processa_comissionamento to run once a week.
+Therefore, we will use on schedule every 1 week, which will
+run the first time on '2015-03-01' at 23:00 hours.
+First, we must enable the event_scheduler in our
+DBMS, because, by default, it is disabled. Open the prompt and
+type the command:
+*/
+
+set global event_scheduler = on;
+
+delimiter $$
+create event processa_comissao
+on schedule every 1 week starts '2015-03-01 23:38:00'
+do
+	begin
+	call processa_comissionamento(current_date() - interval 7 day, current_date(), @a );
+	end
+$$
+delimiter ;
+
+/* disable event */
+
+alter event processa_comissao_event disable;
+
+/* enable event */
+
+alter event processa_comissao_event enable;
+
+```
+
+#### <a name="chapter1part33"></a>Chapter 1 - Part 33: Trigger MySQL
+
+```sql
+
+/* We created a process to generate the commission, which can be */
+/* executed manually or with scheduled events. */
+
+/* However, the our system is not very large and does not have numerous */
+/* number of records. We could then do this operation in */
+/* real time, at the exact moment the sale is launched. */
+/* We will achieve this through triggers. */
+
+/* trigger is a set of operations that are performed */
+/* automatically when a change is made to a record that */
+/* is related to a table. It can be invoked before or */
+/* after a change to an insert, update or delete, */
+/* there can be up to 6 triggers per table. */
+
+/* Trigger Structure */
+
+DELIMITER $$  /* 1: we define the delimiter */
+
+CREATE TRIGGER NAME /* 2: We created the trigger with create trigger and put a name for the trigger */
+BEFORE/AFTER INSERT/DELETE/UPDATE ON TABLE_NAME /* 3: We define whether the trigger will be triggered Before or after an Insert or Delete or Update in the table */
+FOR EACH ROW
+
+BEGIN
+
+	SQL_QUERY
+	
+END
+
+$$
+
+delimiter ;
+
+/*BEFORE INSERT E BEFORE UPDATE TRIGGER */
+
+/* How we want to perform the calculation */
+/* of the commission automatically, we must create two triggers: one */
+/* when you enter a new sale and another when the */
+/* we update. We will use the before insert conditions */
+/* before insertion) and before update. Beyond */
+/* of these two, there are others that I will show in sequence. */
+
+/* To carry out our operation, we must consult the percentage */
+/* of the salesperson registration commission to generate the calculation. */
+/* Putting into practice what we have already learned, we will create a */
+/* function to have this percentage. */
+
+delimiter $$
+
+create function rt_percentual_comissao(vn_n_numevende int)
+returns float deterministic
+begin
+	declare percentual_comissao float(10,2);
+	
+	select n_porcvende
+		into percentual_comissao
+		from convende
+		where n_numevende = vn_n_numevende;
+		
+		return percentual_comissao;
+		end;
+$$
+delimiter ;
+
+/* Now let's go to the code to create the trigger before insertion. */
+/* Note that I will use the same calculation that I used in procedure. */
+
+delimiter $$
+
+create trigger tri_vendas_bi
+before insert on comvenda
+for each row
+
+begin
+	declare percentual_comissao float(10,2);
+	declare valor_comissao float(10,2);
+	
+	/*busco o percentual de comissão que o vendedor deve receber */
+	
+	select rt_percentual_comissao(new.n_numevende) into percentual_comissao;
+	
+	/* calculo comissão */
+	
+	set valor_comissao = ((new.n_totavenda * percentual_comissao) / 100);
+	
+	/* recebo no novo valor de comissão */
+	
+	set new.n_vcomvenda = valor_comissao;
+	
+end
+$$
+delimeter ;
+
+/* Now, when you insert a new record in the table */
+/* sales, the calculation of the seller's commission amount will be */
+/* performed and the field will be filled. */
+
+/* However, the total value of the sale can be changed and, in the event of */
+/* insertion or withdrawal of an item from it, the amount of the commission to be */
+/* paid to the seller will also change. So we must create more */
+/* a trigger on the sales table to make an update */
+/* that amount for when that happens. */
+
+delimiter $$
+
+create trigger tri_vendas_bu
+before update on comvenda
+for each row
+
+begin
+
+declare percentual_comissao float(10,2);
+declare valor_comissao float(10,2);
+
+/* No update, verifico se o valor total novo da venda */
+/* é diferente do total anterior, pois se forem iguais, */
+/* não há necessidade do cálculo */
+
+if (old.n_totavenda <> new.n_totavenda) then
+	select rt_percentual_comissao(new.n_numevende) into percentual_comissao;
+	
+	/* cálculo da comissão */
+	
+	set
+	valor_comissao = ((new.n_totavenda * percentual_comissao) / 100);
+	
+	/* recebo no novo valor de comissão */
+	
+	set new.n_vcomvenda = valor_comissao;
+	
+end if
+end
+$$
+delimiter ;
+
+/*AFTER INSERT E AFTER UPDATE TRIGGER */
+
+/* We made triggers to perform the calculation based on the value of */
+/* sales amount. However, we are manually adding your items */
+/* and entering in the field n_totavenda. This can cause */
+/* error occurs, unlike when inserted from */
+/* an application; however, we can make this calculation */
+/* performed automatically using a trigger. */
+
+/* This time, we will use the types after insert (after */
+/* insert) and after update (after changing) in the table */
+/* comivenda (items of sale), so that, after inserting the */
+/* products, the value of your total is calculated and the field n_totavenda is updated. */
+
+delimiter $$
+
+create trigger tri_vendas_ai
+after insert on comivenda
+for each row
+begin
+
+/* declaro as variáveis que utilizarei */
+
+	declare vtotal_itens float(10,2) default 0;
+	declare total_item float(10,2) default 0;
+	declare fimLoop boolean default false;
+	
+	/* cursor para buscar os itens já registrados da venda */
+	declare busca_itens cursor for
+		select n_valoivenda from comivenda where n_numevenda = new.n_numevenda;
+		
+	/*Handler para encerrar o loop antes da última linha */
+	
+	declare continue handler for sqlstate '02000' set fimLoop = true;
+	
+	/*abro o cursor */
+	open busca_itens;
+	/* declaro e inicio o loop */
+	itens : loop fetch busca_itens into total_item;
+	
+	/* encerra o bloco quando o cursor não retornar mais linhas */
+	
+	if fimLoop then
+		leave itens;
+	end if;
+	
+	/* somo o valor total dos itens(produtos) */
+	set vtotal_itens = vtotal_itens + total_item;
+	
+end loop itens;
+
+close busca_itens;
+
+/* atualizo o total da venda */
+update comvenda set n_totavenda = vtotal_itens where n_numevenda = new.n_numevenda;
+
+end
+$$
+delimiter ;
+
+/* Agora temos a mesma situação que tínhamos anteriormente,
+pois a tabela de itens da venda pode ser atualizada e, se isso
+ocorrer, o valor de seu total ficará incorreto. Por isso, devemos
+criar uma trigger que o atualizará se o valor do item for alterado;
+mas somente na condição de o novo ser diferente do antigo. Esse
+não sendo o caso, não é necessário executar os cálculos.
+*/
+
+delimiter $$
+create trigger tri_ivendas_au
+after update on comivenda
+for each row
+begin
+
+/* declaro as variáveis que utilizarei */
+
+declare vtotal_itens float(10,2) default 0;
+declare total_item float(10,2) default 0;
+declare fimLoop boolean default false;
+
+/* cursor para buscar os itens já registrados da venda */
+
+declare busca_itens cursor for select n_valoivenda from comivenda where n_numevenda = new.n_numevenda;
+
+/* Handler para encerrar o loop antes da última linha */
+
+declare continue handler for sqlstate '02000' set fimLoop = true;
+
+/* verifico se há necessidade de alteração */
+/* faço somente se o novo valor for alterado */
+
+if new.n_valoivenda <> old.n_valoivenda then
+
+/* abro o cursor */
+open busca_itens;
+/* declaro e inicio o loop */
+
+itens : loop
+
+fetch busca_itens into total_item;
+
+/*encerra o bloco quando o cursor não retornar mais linhas */
+
+	if fimLoop then
+		leave itens;
+	end if;
+	
+	/* somo o valor total dos itens(produtos) */
+	
+	set vtotal_itens = vtotal_itens + total_item;
+
+end loop itens;
+
+close busca_itens;
+
+/* atualizo o total da venda */
+
+update comvenda set n_totavenda = vtotal_itens where n_numevenda = new.n_numevenda;
+
+end if;
+end
+$$
+delimeter ;
+
+/*BEFORE DELETE E AFTER DELETE TRIGGER */
+
+/*
+Now, you may have the following question: what if we
+we delete an item from a sale? Really, if that happens
+at this time, your total amount will be incorrect, as we have
+just the triggers for insert and update. To correct this
+problem, let's create one for the delete as well.
+*/
+
+delimiter $$
+create trigger tri_ivendas_af
+after delete on comivenda
+for each row
+begin
+/* declaro as variáveis que utilizarei */
+declare vtotal_itens float(10,2) default 0;
+declare total_item float(10,2) default 0;
+declare fimLoop boolean default false;
+/* cursor para buscar os itens já registrados da venda */
+
+declare busca_itens cursor for
+select n_valoivenda
+from comivenda
+where n_numevenda = old.n_numevenda;
+
+/*Handler para encerrar o loop antes da última linha */
+declare continue handler for
+sqlstate '02000'
+set fimLoop = true;
+/* abro o cursor */
+open busca_itens;
+/* declaro e inicio o loop */
+itens : loop
+
+fetch busca_itens into total_item;
+
+/*encerra o bloco quando o cursor não retornar mais linhas.*/
+
+if fimLoop then
+leave itens;
+end if;
+## somo o valor total dos itens(produtos)
+set vtotal_itens = vtotal_itens + total_item;
+end loop itens;
+close busca_itens;
+## atualizo o total da venda
+update comvenda set n_totavenda = vtotal_itens
+where n_numevenda = old.n_numevenda;
+end
+$$
+delimiter ;
+
+/*
+We have one more situation that we can resolve using the
+trigger: on delete. Remember the integrity issues of data.
+ A table that has a foreign key cannot be deleted
+a record without first deleting the primary record.
+*/
+
+delimiter $$
+create trigger tri_vendas_bf
+before delete on comvenda
+for each row
+begin
+/* declaro as variáveis que utilizarei /*
+declare vtotal_itens float(10,2) default 0;
+declare total_item float(10,2) default 0;
+declare fimLoop boolean default false;
+/* verifico se há necessidade de alteração */
+/* faço somente se o novo valor for alterado */
+/* cursor para buscar os itens já registrados da venda */
+
+declare busca_itens cursor for
+select n_valoivenda
+from comivenda
+where n_numevenda = old.n_numevenda;
+
+/*Handler para encerrar o loop antes da última linha */
+
+declare continue handler for
+sqlstate '02000'
+set fimLoop = true;
+
+/* abro o cursor */
+open busca_itens;
+/* declaro e inicio o loop */
+itens : loop
+
+fetch busca_itens into total_item;
+
+/*encerra o bloco quando o cursor não retornar mais linhas */
+
+if fimLoop then
+leave itens;
+end if;
+
+/* somo o valor total dos itens(produtos) */
+
+set vtotal_itens = vtotal_itens + total_item;
+
+end loop itens;
+
+close busca_itens;
+
+/* atualizo o total da venda */
+
+delete from comivenda where n_numevenda = old.n_numevenda;
+end
+$$
+delimiter ;
+
+/* TRIGGER STATUS */
+
+/* to disable trigger */
+
+alter trigger tri_vendas_bi desable;
+
+/* to enable trigger */
+
+alter trigger tri_vendas_bi enable;
+
+/* to drop trigger */
+
+drop trigger tri_vendas_bi;
+
+```
+
+#### <a name="chapter1part34"></a>Chapter 1 - Part 34: Index MySQL
+
+```sql
+
+/*
+In order to assist in improving queries, MySQL
+provides us indexes. When we create as our own
+tables, we have already created a primary key index (primary key).
+However, it is not used to make this optimization of
+performance, as it only serves to take care of the integrity of data.
+The initial measure we should take to improve the time
+of queries is the creation of indexes for the tables
+But what happens to this performance gain? When a table has no indexes, its records are
+disorderly and a consultation will have to go through them all. If
+if we add an index, a new table is generated. The amount
+records of this new one is the same as the original one, the difference is
+that they are organized.
+/*
+/* Create Index in a new table */
+
+create table t1(
+c1 int not null auto_increment,
+c2 varchar(10),
+c3 varchar(200),
+c4 varchar(200),
+c5 date,
+c6 varchar(15),
+c7 varchar(15),
+primary key (c1),
+index idx_t1(c2));
+
+/* Create Index in a existing table */
+
+alter table comclien add index idx_comclien_3(c_razaclien);
+
+alter table comclien add index idx_comclien_4(c_codiclien);
+
+show indexes from comclien;
+
+/* When use */
+
+/*
+You should give preference to columns that we use to
+search, ordering or grouping, in clauses: where,
+joins, order by or group by.
+*/
+
+/* Won't use */
+
+/*
+f a column contains very different values ​​(for example,
+the one that keeps the ages), an index will differentiate the records
+quickly. However, it will not help with one that is used to
+store gender (sex) records and contains only the values
+M or F.
+*/
+
+/* Unique Index */
+
+/*
+MySQL also has other types of indexes. Another more
+common is the unique index. As the name says, it is an index
+that also serves to restrict duplication of data. To
+create it in a column, you're telling the DBMS that it doesn't
+can accept duplicate records there.
+*/
+
+alter table comvenda add unique index idx_comvenda_1(c_codivenda);
+
+show indexes from comvenda;
+
+```
+
+#### <a name="chapter1part35"></a>Chapter 1 - Part 35: Views MySQL
+
+```sql
+
+/* 
+We also know that every time we rewrite the same
+consultation, we will achieve the same results as before. 
+That is a serious task, as there are several ways to write a
+same consultation. To alleviate this situation and also thinking
+in performance and time saved, we can quickly transform these queries into a view. 
+From that, she will remain stored on the database server at
+form of a table so that we can consult it every time
+we need, without having to rewrite it
+A view is an object that belongs to a database,
+defined and based on selects statements, returning a
+given view of data from one or more tables. Those
+objects are sometimes called virtual tables, formed from
+other tables that, in turn, are called based tables or other Views. 
+In some cases, these are upgradeable and can be insert, update and
+delete, which actually modifies your based tables.
+*/
+
+/* Create View */
+
+create or replace view clientes_vendas_fornecedor as
+select comvenda.n_numevenda, comvenda.n_valovenda, comforne.c_nomeforne, comclien.c_nomeclien /* projection - table comvenda - comforne and comclien */
+from comvenda
+inner join comforne
+on comvenda.n_numeforne = comforne.n_numeforne
+inner join comclien
+on comvenda.n_numeclien = comclien.n_numeclien;
+
+select * from clientes_vendas_fornecedor;
+
+/* Update views */
+
+/* 
+For you to be able to insert, update and delete a record
+through a view, it cannot have joins and functions
+aggregators, such as group by.
+*/
+
+create or replace view produtos as
+select n_numeprodu,
+c_codiprodu,
+c_descprodu,
+n_valoprodu,
+c_situprodu,
+n_numeforne
+from comprodu;
+
+insert into produtos values (6,'0006','SMART WATCH','2412.98','A',1);
+
+update produtos set n_valoprodu = '1245.99' where n_numeprodu = 6;
+
+```
+
+#### <a name="chapter1part36"></a>Chapter 1 - Part 36: Backups MySQL
+
+```sql
+
+/* Create Backups Online */
+
+/* With cmd, navegate to bin folder */
+
+C:\Program Files\MySQL\MySQL Server 8.0\bin
+
+/* Use this command to backup the database */
+
+mysqldump -u root -p example > C:\Users\solun\Desktop\examplebackup.sql
+
+/* To export trigger, functions and procedures */
+
+mysqldump -u root -p --routines --triggers example > C:\Users\solun\Desktop\examplebackup.sql
+
+/* Especific table */
+
+mysqldump -u root -p example comclien > C:\Users\solun\Desktop\examplebackup.sql
+
+/* All Databases */
+
+mysqldump -u root -p --all-databases > C:\Users\solun\Desktop\examplebackup.sql
+
+/* Import backup */
+
+create database example2;
+
+/* With cmd, navegate to bin folder */
+
+C:\Program Files\MySQL\MySQL Server 8.0\bin
+
+/* Make a back up */
+
+mysqldump -u root -p --routines --triggers example > C:\Users\solun\Desktop\examplebackup.sql
+
+/* In the same cmd, make */
+
+mysql -h localhost -u root -p example2 < C:\Users\solun\Desktop\examplebackup.sql
+
+use example2;
+
+show tables;
+
+```
+
+#### <a name="chapter1part37"></a>Chapter 1 - Part 37: Export CSV MySQL
+
+```sql
+
+/* 
+We can export to .csv file or .txt file
+*/
+
+/* First, you need to know where the file will be stored */
+
+/* First, run this command to know the path */
+
+SHOW VARIABLES LIKE "secure_file_priv";
+
+/*
++------------------+------------------------------------------------+
+| Variable_name    | Value                                          |
++------------------+------------------------------------------------+
+| secure_file_priv | C:\ProgramData\MySQL\MySQL Server 8.0\Uploads\ |
++------------------+------------------------------------------------+
+*/
+
+/* Will be stored in C:\ProgramData\MySQL\MySQL Server 8.0\Uploads\ */
+
+use example
+
+/*
+For example, let's save all the records in the
+customers in a .txt file. On export, we will tell the
+DBMS that we want to save the file to the c: / drive with the
+example.txt. We want to separate each record
+',' and limit each column with ''''.
+*/
+
+select * from comclien
+into outfile 'C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\examplebackup1.txt'
+fields terminated by ','
+enclosed by '''';
+
+select * from comclien
+into outfile 'C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\examplebackup1.csv'
+fields terminated by ','
+enclosed by '''';
+
+/* Another example */
+
+SELECT * FROM calculo_receita.ingrediente 
+INTO OUTFILE 'C:\\Temp\\teste.csv'
+FIELDS ENCLOSED BY '"' 
+TERMINATED BY ';' 
+ESCAPED BY '"' 
+LINES TERMINATED BY '\r\n';
+
+```
+
+#### <a name="chapter1part38"></a>Chapter 1 - Part 38: Import CSV MySQL
+
+```sql
+
+/* 
+We can import to .csv file or .txt file
+*/
+
+/* First, you need to know where the file will be stored */
+
+/* First, run this command to know the path */
+
+SHOW VARIABLES LIKE "secure_file_priv";
+
+/*
++------------------+------------------------------------------------+
+| Variable_name    | Value                                          |
++------------------+------------------------------------------------+
+| secure_file_priv | C:\ProgramData\MySQL\MySQL Server 8.0\Uploads\ |
++------------------+------------------------------------------------+
+*/
+
+/* Will be stored in C:\ProgramData\MySQL\MySQL Server 8.0\Uploads\ */
+
+/*
+The import via file can be very useful in actions of
+popular data in a database or import it from others
+systems or banks, as I described earlier. Of the same
+way that export, it will not depend on an application or
+of a tool.
+*/
+
+create table comuser(n_numeuser int not null auto_increment,n_nomeuser varchar(100),n_nascuser date,primary key(n_numeuser));
+
+load data infile 'C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\example5.txt'
+into table comuser
+fields terminated by ','
+lines terminated by '\n';
+
+/* export */
+
+select * from comuser
+into outfile 'C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\example6.txt'
+fields terminated by ','
+enclosed by '''';
+
+/* Another example */
+
+SET GLOBAL local_infile = 1;
+
+LOAD DATA LOCAL INFILE 'C:\\Users\\vep08.FESTPANDOMAIN\\Desktop\\Teste.csv'
+INTO TABLE calculo_receita.ingrediente
+CHARACTER SET latin1
+FIELDS TERMINATED BY ';'
+LINES TERMINATED BY '\n'
+(id, codigo, descricao, custo);
+
+SELECT * FROM calculo_receita.ingrediente;
 
 ```
