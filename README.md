@@ -806,19 +806,3 @@ on comvenda.n_numeclien = comclien.n_numeclien
 order by c_nomeforne;
 
 ```
-
-
-
-
-
-
-    - [Chapter 1 - Part 11: Insert MySQL](#chapter1part11)
-    - [Chapter 1 - Part 12: Update MySQL](#chapter1part12)
-    - [Chapter 1 - Part 13: Delete MySQL](#chapter1part13)
-    - [Chapter 1 - Part 14: Tables Examples MySQL](#chapter1part14)
-    - [Chapter 1 - Part 15: Select MySQL](#chapter1part15)
-    - [Chapter 1 - Part 16: Or And MySQL](#chapter1part16)
-    - [Chapter 1 - Part 17: In Exist Subquery MySQL](#chapter1part17)
-    - [Chapter 1 - Part 18: As Aliases MySQL](#chapter1part18)
-    - [Chapter 1 - Part 19: Join Table MySQL](#chapter1part19)
-    - [Chapter 1 - Part 20: Order By MySQL](#chapter1part20)
