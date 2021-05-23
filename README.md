@@ -362,7 +362,7 @@ alter table comclien modify column c_estaclien varchar(100);
 
 ```
 
-#### <a name="chapter1part9"></a>Chapter 1 - Part 10: Drop Table MySQL
+#### <a name="chapter1part10"></a>Chapter 1 - Part 10: Drop Table MySQL
 
 ```sql
 
